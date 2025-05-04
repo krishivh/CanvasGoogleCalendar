@@ -9,6 +9,11 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 #function to call GPT and extract exam dates
+from openai import OpenAI
+import os
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 def extract_exam_dates_from_text(text):
     prompt = f"""
 Read the following syllabus and extract all test-related events (quizzes, midterms, finals, exams).
@@ -19,13 +24,17 @@ Syllabus:
 {text}
 """
 
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2,
-    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+        )
 
-    return response.choices[0].message.content
+        return response.choices[0].message.content
+    except Exception as e:
+        print("OpenAI API error:", e)
+        return "[]"
 
 #main script
 if __name__ == "__main__":
