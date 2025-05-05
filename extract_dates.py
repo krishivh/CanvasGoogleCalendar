@@ -2,13 +2,10 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 
-#load .env variables (API keys)
 load_dotenv()
 
-#initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-#function to call GPT and extract exam dates
 from openai import OpenAI
 import os
 

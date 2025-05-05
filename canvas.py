@@ -2,7 +2,6 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# Load .env values
 load_dotenv()
 
 API_URL = "https://canvas.instructure.com/api/v1"
