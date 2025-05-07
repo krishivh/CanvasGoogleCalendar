@@ -1,40 +1,59 @@
 import React, { useEffect, useState } from "react";
+import "./App.css";
 
 function App() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [message, setMessage] = useState("");
+  const [addedExams, setAddedExams] = useState([]);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/courses")
       .then((res) => res.json())
       .then((data) => setCourses(data))
-      .catch((err) => setMessage("❌ Failed to fetch courses"));
+      .catch(() => setMessage("❌ Failed to fetch courses"));
   }, []);
 
   const handleSubmit = () => {
     if (!selectedCourse) {
-      setMessage("❗ Please select a course first.");
+      setMessage("❌ Missing course ID or name");
       return;
     }
+
+    const course = courses.find(c => c.id === parseInt(selectedCourse));
+    if (!course) {
+      setMessage("❌ Selected course not found");
+      return;
+    }
+
+    setMessage("⏳ Processing...");
+    setAddedExams([]);
 
     fetch("http://127.0.0.1:5000/process", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId: selectedCourse }),
+      body: JSON.stringify({
+        courseId: selectedCourse,
+        courseName: course.name
+      }),
     })
       .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => setMessage("❌ Failed to process course"));
+      .then((data) => {
+        if (data.details) {
+          setAddedExams(data.details);
+          setMessage(`✅ ${data.details.length} exam(s) added to your calendar!`);
+        } else {
+          setMessage(data.message || "❌ Something went wrong.");
+        }
+      })
+      .catch(() => setMessage("❌ An error occurred while processing."));
   };
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "Arial" }}>
-      <h1>📚 Select a Class to Add Exam Dates</h1>
-      <select
-        onChange={(e) => setSelectedCourse(e.target.value)}
-        style={{ padding: "0.5rem", fontSize: "1rem", marginBottom: "1rem" }}
-      >
+    <div className="App">
+      <h1>📘 Select a Class</h1>
+
+      <select onChange={(e) => setSelectedCourse(e.target.value)} defaultValue="">
         <option value="">-- Select a class --</option>
         {courses.map((course) => (
           <option key={course.id} value={course.id}>
@@ -42,16 +61,25 @@ function App() {
           </option>
         ))}
       </select>
+
       <br />
-      <button
-        onClick={handleSubmit}
-        style={{ padding: "0.5rem 1rem", fontSize: "1rem" }}
-      >
-        Add to Google Calendar
-      </button>
-      <p style={{ marginTop: "1rem", fontWeight: "bold", color: "darkred" }}>
-        {message}
-      </p>
+      <button onClick={handleSubmit}>Add to Google Calendar</button>
+
+      {message && (
+        <p className={message.includes("✅") ? "success" : "error"}>
+          {message}
+        </p>
+      )}
+
+      {addedExams.length > 0 && (
+        <ul>
+          {addedExams.map((exam, index) => (
+            <li key={index}>
+              {exam.type} on {exam.date} {exam.time ? `at ${exam.time}` : "(all day)"}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
